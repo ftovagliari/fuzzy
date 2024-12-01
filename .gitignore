@@ -1,0 +1,10 @@
+bak/
+.tmp/
+*.cmi
+*.cmt
+*.cmo
+src/.oebuild
+fuzzy.project.local
+.merlin
+.cache/
+*.cma
