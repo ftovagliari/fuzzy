@@ -46,7 +46,7 @@ struct
 
   let debug = ref true
 
-  let find_common_paths a b =
+  let find_common_paths_brute a b =
     let length_a = Array.length a in
     let length_b = Array.length b in
     let last_a = length_a - 1 in
@@ -54,11 +54,13 @@ struct
     let matrix = Array.make_matrix length_a length_b None in
     let path = ref [] in
     let paths = ref [] in
+    let count = ref 0 in
     let end_path () =
       paths := !path :: !paths;
       path := [];
     in
     let rec search i j has_prev =
+      incr count;
       if a.(i) <> b.(j) then begin
         if has_prev then end_path()
       end else begin
@@ -82,7 +84,59 @@ struct
         path |> List.rev |> List.map (fun (pos, { contents = v }) -> pos, v)
       end
     in
+    Printf.printf "complexity: %d/%d (%.1f%%) -- paths: %d\n%!"
+      !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
+      (List.length paths);
     paths, if !debug && !Sys.interactive then Some matrix else None;;
+
+  let find_common_paths_greedy a b =
+    let length_a = Array.length a in
+    let length_b = Array.length b in
+    let last_a = length_a - 1 in
+    let last_b = length_b - 1 in
+    let path = ref [] in
+    let paths = ref [] in
+    let count = ref 0 in
+    let end_path () =
+      paths := !path :: !paths;
+      path := [];
+    in
+    let rec search i j =
+      incr count;
+      if a.(i) <> b.(j) then begin
+        if List.length !path > 1 then (end_path(); i - 1)
+        else (path := []; -1)
+      end else begin
+        path := ((i, j), ref a.(i)) :: !path;
+        if i = last_a || j = last_b
+        then (end_path(); i)
+        else search (i + 1) (j + 1)
+      end;
+    in
+    let i = ref 0 in
+    while !i < length_a do
+      let j = ref 0 in
+      while !j < length_b do
+        let i' = search !i !j in
+        if i' >= 0 then begin
+          i := i'; (* see incr i below *)
+          j := length_b
+        end;
+        incr j;
+      done;
+      incr i;
+    done;
+    let paths =
+      !paths
+      |> List.rev
+      |> List.map begin fun path ->
+        path |> List.rev |> List.map (fun (pos, { contents = v }) -> pos, v)
+      end
+    in
+    Printf.printf "complexity: %d/%d (%.1f%%) -- paths: %d\n%!"
+      !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
+      (List.length paths);
+    paths, None;;
 
   (** Removes shortest overlapping paths *)
   let reduce paths =
@@ -107,11 +161,12 @@ struct
     paths |> Array.to_list |> List.filter ((<>) [])
   ;;
 
-  let compare ?(simplify=true) pat str =
+  let compare ?(simplify=true) algoritm pat str =
     let pat = Elt.deserialize pat in
     let str = Elt.deserialize str in
     let len_pat, len_str = Array.length pat, Array.length str in
-    let paths, debug_matrix = find_common_paths pat str in
+    let find = match algoritm with `Brute -> find_common_paths_brute | `Greedy -> find_common_paths_greedy in
+    let paths, debug_matrix = find pat str in
     let paths = paths |> simplify @|> reduce in
     let paths = paths |> List.map (fun p -> p |> List.map (fun (_, v) -> v)) in
     Option.iter print_matrix debug_matrix;

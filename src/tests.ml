@@ -7,6 +7,12 @@
 module FuzzyLetters = Fuzzy.Make(Fuzzy.Letter);;
 module FuzzyWords = Fuzzy.Make(Fuzzy.Word);;
 
+FuzzyLetters.compare `Brute "folderfold" "foldfolder";;
+FuzzyLetters.compare `Greedy "folderfold" "foldfolder";;
+
+FuzzyLetters.compare "foldfolder" "folderfold";;
+FuzzyLetters.compare "foldlisleftlist" "List.fold_left2";;
+
 let by_letters = [
   "New York Mets vs Atlanta Braves", "Atlanta Braves vs New York Mets";
   "somewhresimlrbetweenthisstring", "similar";
