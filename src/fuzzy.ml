@@ -63,8 +63,7 @@ struct
         if has_prev then end_path()
       end else begin
         matrix.(i).(j) <- Some a.(i);
-        let pos = i * length_b + j in
-        path := (pos, ref a.(i)) :: !path;
+        path := ((i, j), ref a.(i)) :: !path;
         if i >= last_a || j >= last_b then end_path()
         else search (i + 1) (j + 1) true
       end
@@ -86,22 +85,22 @@ struct
     paths, if !debug && !Sys.interactive then Some matrix else None;;
 
   (** Removes shortest overlapping paths *)
-  let reduce lb paths =
+  let reduce paths =
     let paths = Array.of_list paths in
     let n_paths = Array.length paths in
     for i = 0 to n_paths - 1 do
       match paths.(i) with
       | [] -> ()
-      | ((root_i, _) :: _) as path_i ->
-        let bi = root_i / lb in
+      | (((xi, yi), _) :: _) as path_i ->
+        let len_i = List.length path_i in
         for j = 0 to n_paths - 1 do
           if i <> j then
             match paths.(j) with
             | [] -> ()
             | path_j ->
-              let ij_overlap = path_j |> List.exists (fun (n, _) -> n / lb = bi) in
+              let ij_overlap = path_j |> List.exists (fun ((x, y), _) -> xi = x || yi = y) in
               if ij_overlap then
-                let k = if List.length path_i <= List.length path_j then i else j in
+                let k = if len_i <= List.length path_j then i else j in
                 paths.(k) <- []
         done
     done;
@@ -113,7 +112,7 @@ struct
     let str = Elt.deserialize str in
     let len_pat, len_str = Array.length pat, Array.length str in
     let paths, debug_matrix = find_common_paths pat str in
-    let paths = paths |> simplify @|> reduce len_str in
+    let paths = paths |> simplify @|> reduce in
     let paths = paths |> List.map (fun p -> p |> List.map (fun (_, v) -> v)) in
     Option.iter print_matrix debug_matrix;
     if !debug && !Sys.interactive then
