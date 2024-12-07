@@ -52,28 +52,19 @@ struct
     let last_a = length_a - 1 in
     let last_b = length_b - 1 in
     let matrix = Array.make_matrix length_a length_b None in
-    let tmp_path = ref [] in
+    let path = ref [] in
     let paths = ref [] in
-    let prev = ref None in
     let end_path () =
-      match !prev with
-      | Some ({ contents = (_, v) } as p) ->
-        p := 0, v;
-        paths := !tmp_path :: !paths;
-        tmp_path := [];
-        prev := None;
-      | _ -> ()
+      paths := !path :: !paths;
+      path := [];
     in
     let rec search i j has_prev =
-      if a.(i) <> b.(j) then
-        (if has_prev then end_path())
-      else begin
+      if a.(i) <> b.(j) then begin
+        if has_prev then end_path()
+      end else begin
         matrix.(i).(j) <- Some a.(i);
-        let start = i * length_b + j in
-        let stop = if i < last_a && j < last_b then (i + 1) * length_b + (j + 1) else 0 in
-        let p = ref (stop, a.(i)) in
-        prev := Some p;
-        tmp_path := (start, p) :: !tmp_path;
+        let pos = i * length_b + j in
+        path := (pos, ref a.(i)) :: !path;
         if i >= last_a || j >= last_b then end_path()
         else search (i + 1) (j + 1) true
       end
@@ -82,15 +73,14 @@ struct
       for j = 0 to last_b do
         match matrix.(i).(j) with
         | None -> search i j false
-        | _ -> ()
+        | _ -> () (* Skip the matrix cells already processed *)
       done;
     done;
-    end_path();
     let paths =
       !paths
       |> List.rev
       |> List.map begin fun path ->
-        path |> List.rev |> List.map (fun (a, { contents = (_, v) }) -> a, v)
+        path |> List.rev |> List.map (fun (pos, { contents = v }) -> pos, v)
       end
     in
     paths, if !debug && !Sys.interactive then Some matrix else None;;

@@ -17,12 +17,13 @@ let by_letters = [
   "foldlist", "List.fold_left";
   "fildlostri", "LogBuilder.print_timestamp";
   "lifole2", "List.fold_left";
+  "bcdbc", "bcd"; (* FIX reduce *)
+  "bcd", "bcdbc";
 ];;
-
-FuzzyLetters.debug := false;;
+FuzzyLetters.debug := true;;
 by_letters |> List.iter begin fun (a, b) ->
   let score, paths = FuzzyLetters.compare a b in
-  Printf.printf "%S %S %2.1f - %s\n%!" a b score
+  Printf.printf "%S %S %.2f - %s\n%!" a b score
     (paths |> List.map FuzzyLetters.print_path |> String.concat ", ");
 end;;
 
@@ -42,10 +43,8 @@ FuzzyWords.compare ~simplify:true p5 p6;;
 
 FuzzyWords.compare ~simplify:true p3 p4;;
 
-FuzzyWords.compare ~simplify:true p5 p7;;
-FuzzyLetters.compare ~simplify:true p5 p7;;
-
 FuzzyLetters.compare "New York Mets vs Atlanta Braves" "Atlanta Braves vs New York Mets";;
+FuzzyWords.compare "New_ York Mets _vs_ Atlanta Braves" "Atlanta Braves _vs_ New_ York Mets";;
 
 
 (*compare "mysmilarstring" "myawfullysimilarstirng";; (* 74 *)
