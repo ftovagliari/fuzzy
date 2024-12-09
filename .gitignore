@@ -8,3 +8,7 @@ fuzzy.project.local
 .merlin
 .cache/
 *.cma
+*.a
+*.cmx
+*.cmxa
+*.o

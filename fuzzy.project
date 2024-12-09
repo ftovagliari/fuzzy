@@ -10,13 +10,13 @@
   <version>1.0.0</version>
   <autocomp enabled="true" delay="1." cflags=""/>
   <targets>
-    <target name="fuzzy" default="true" id="0" sub_targets="" is_fl_package="false" subsystem="" readonly="false" visible="true" node_collapsed="false">
+    <target name="fuzzy" default="true" id="0" sub_targets="" is_fl_package="true" subsystem="" readonly="false" visible="true" node_collapsed="false">
       <descr></descr>
-      <byt>true</byt>
-      <opt>false</opt>
+      <byt>false</byt>
+      <opt>true</opt>
       <libs></libs>
       <other_objects></other_objects>
-      <files>fuzzy_lib.ml</files>
+      <files>fuzzy.ml</files>
       <package>str </package>
       <includes></includes>
       <thread>false</thread>
@@ -32,6 +32,88 @@
       <outname>fuzzy</outname>
       <lib_install_path></lib_install_path>
       <external_tasks/>
+      <restrictions></restrictions>
+      <dependencies></dependencies>
+    </target>
+    <target name="FINDLIB-TOOLS" default="false" id="1" sub_targets="" is_fl_package="false" subsystem="" readonly="true" visible="true" node_collapsed="false">
+      <descr></descr>
+      <byt>true</byt>
+      <opt>false</opt>
+      <libs></libs>
+      <other_objects></other_objects>
+      <files></files>
+      <package></package>
+      <includes></includes>
+      <thread>false</thread>
+      <vmthread>false</vmthread>
+      <pp></pp>
+      <inline></inline>
+      <nodep>false</nodep>
+      <dontlinkdep>false</dontlinkdep>
+      <dontaddopt>false</dontaddopt>
+      <cflags></cflags>
+      <lflags></lflags>
+      <target_type>External</target_type>
+      <outname></outname>
+      <lib_install_path></lib_install_path>
+      <external_tasks>
+        <task name="install">
+          <always_run_in_project>false</always_run_in_project>
+          <always_run_in_script>false</always_run_in_script>
+          <readonly>true</readonly>
+          <visible>true</visible>
+          <env replace="false"/>
+          <dir>..</dir>
+          <cmd>ocaml</cmd>
+          <args>
+            <arg enabled="true">tools/findlib.ml</arg>
+            <arg enabled="true">install</arg>
+          </args>
+          <phase></phase>
+        </task>
+        <task name="uninstall">
+          <always_run_in_project>false</always_run_in_project>
+          <always_run_in_script>false</always_run_in_script>
+          <readonly>true</readonly>
+          <visible>true</visible>
+          <env replace="false"/>
+          <dir>..</dir>
+          <cmd>ocaml</cmd>
+          <args>
+            <arg enabled="true">tools/findlib.ml</arg>
+            <arg enabled="true">uninstall</arg>
+          </args>
+          <phase></phase>
+        </task>
+        <task name="reinstall">
+          <always_run_in_project>false</always_run_in_project>
+          <always_run_in_script>false</always_run_in_script>
+          <readonly>true</readonly>
+          <visible>true</visible>
+          <env replace="false"/>
+          <dir>..</dir>
+          <cmd>ocaml</cmd>
+          <args>
+            <arg enabled="true">tools/findlib.ml</arg>
+            <arg enabled="true">reinstall</arg>
+          </args>
+          <phase></phase>
+        </task>
+        <task name="print">
+          <always_run_in_project>false</always_run_in_project>
+          <always_run_in_script>false</always_run_in_script>
+          <readonly>true</readonly>
+          <visible>true</visible>
+          <env replace="false"/>
+          <dir>..</dir>
+          <cmd>ocaml</cmd>
+          <args>
+            <arg enabled="true">tools/findlib.ml</arg>
+            <arg enabled="true">print</arg>
+          </args>
+          <phase></phase>
+        </task>
+      </external_tasks>
       <restrictions></restrictions>
       <dependencies></dependencies>
     </target>

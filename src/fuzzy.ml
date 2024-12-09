@@ -11,7 +11,7 @@ module Word = struct
   type t = string
   let to_string = Fun.id
   let of_string = Fun.id
-  let deserialize = Text.prepare_words
+  let deserialize = Fuzzy_utils.prepare_words
   let separator = "-"
 end
 
@@ -19,7 +19,7 @@ module Letter = struct
   type t = char
   let to_string = Stdlib.String.make 1
   let of_string s = s.[0]
-  let deserialize = Text.prepare_letters
+  let deserialize = Fuzzy_utils.prepare_letters
   let separator = ""
 end
 
@@ -27,7 +27,7 @@ module Make = functor (Elt : ELEMENT) ->
 struct
 
   open Printf
-  open Utils
+  open Fuzzy_utils
 
   type path = Elt.t list
 
@@ -38,8 +38,8 @@ struct
     for i = 0 to Array.length m - 1 do
       for j = 0 to Array.length (m.(i)) - 1 do
         match m.(i).(j) with
-        | Some value ->printf "%s," (Elt.to_string value)
-        | _ -> printf " ,"
+        | Some value ->printf "%s " (Elt.to_string value)
+        | _ -> printf ". "
       done;
       Printf.printf "\n%!"
     done;;
@@ -84,10 +84,66 @@ struct
         path |> List.rev |> List.map (fun (pos, { contents = v }) -> pos, v)
       end
     in
-    Printf.printf "complexity: %d/%d (%.1f%%) -- paths: %d\n%!"
-      !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
-      (List.length paths);
+    if !Sys.interactive then
+      Printf.printf "brute: %d/%d (%.1f%%) -- paths: %d\n%!"
+        !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
+        (List.length paths);
     paths, if !debug && !Sys.interactive then Some matrix else None;;
+
+  let find_common_paths_greedy2 a b =
+    let length_a = Array.length a in
+    let length_b = Array.length b in
+    let last_a = length_a - 1 in
+    let last_b = length_b - 1 in
+    let path = ref [] in
+    let paths = ref [] in
+    let count = ref 0 in
+    let end_path () =
+      paths := !path :: !paths;
+      path := [];
+    in
+    let rec search i j =
+      incr count;
+      if a.(i) <> b.(j) then begin
+        if List.length !path > 1 then (end_path(); Some (i - 1, j - 1))
+        else (path := []; None)
+      end else begin
+        path := ((i, j), ref a.(i)) :: !path;
+        if i = last_a || j = last_b
+        then (end_path(); Some (i, j))
+        else search (i + 1) (j + 1)
+      end;
+    in
+    let i = ref 0 in
+    while !i < length_a do
+      let j = ref 0 in
+      while !j < length_b do
+        begin
+          match search !i !j with
+          | Some (i', j') ->
+            if j' <= length_b / 2 then j := j'
+            else begin
+              i := i';
+              j := length_b;
+            end
+          | _ -> ()
+        end;
+        incr j;
+      done;
+      incr i;
+    done;
+    let paths =
+      !paths
+      |> List.rev
+      |> List.map begin fun path ->
+        path |> List.rev |> List.map (fun (pos, { contents = v }) -> pos, v)
+      end
+    in
+    if !Sys.interactive then
+      Printf.printf "greedy2: %d/%d (%.1f%%) -- paths: %d\n%!"
+        !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
+        (List.length paths);
+    paths, None;;
 
   let find_common_paths_greedy a b =
     let length_a = Array.length a in
@@ -133,9 +189,10 @@ struct
         path |> List.rev |> List.map (fun (pos, { contents = v }) -> pos, v)
       end
     in
-    Printf.printf "complexity: %d/%d (%.1f%%) -- paths: %d\n%!"
-      !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
-      (List.length paths);
+    if !Sys.interactive then
+      Printf.printf "greedy: %d/%d (%.1f%%) -- paths: %d\n%!"
+        !count (length_a * length_b) ((float !count /. float (length_a * length_b)) *. 100.)
+        (List.length paths);
     paths, None;;
 
   (** Removes shortest overlapping paths *)
@@ -152,7 +209,7 @@ struct
             match paths.(j) with
             | [] -> ()
             | path_j ->
-              let ij_overlap = path_j |> List.exists (fun ((x, y), _) -> xi = x || yi = y) in
+              let ij_overlap = path_j |> List.exists (fun ((x, y), _) -> x = xi || y = yi) in
               if ij_overlap then
                 let k = if len_i <= List.length path_j then i else j in
                 paths.(k) <- []
@@ -165,14 +222,19 @@ struct
     let pat = Elt.deserialize pat in
     let str = Elt.deserialize str in
     let len_pat, len_str = Array.length pat, Array.length str in
-    let find = match algoritm with `Brute -> find_common_paths_brute | `Greedy -> find_common_paths_greedy in
+    let find =
+      match algoritm with
+      | `Brute -> find_common_paths_brute
+      | `Greedy -> find_common_paths_greedy
+      | `Greedy2 -> find_common_paths_greedy2
+    in
     let paths, debug_matrix = find pat str in
     let paths = paths |> simplify @|> reduce in
     let paths = paths |> List.map (fun p -> p |> List.map (fun (_, v) -> v)) in
     Option.iter print_matrix debug_matrix;
     if !debug && !Sys.interactive then
       paths
-      |> List.map (fun p -> p |> List.map Elt.to_string |> String.concat "-")
+      |> List.map (fun p -> p |> List.map Elt.to_string |> String.concat "")
       |> String.concat ", " |> printf "%s\n%!";
     let lp = float len_pat in
     let ls = float len_str in

@@ -1,0 +1,7 @@
+##### META.fuzzy #####
+
+version         = "1.0.0"
+description     = ""
+requires        = "str "
+archive(byte)   = ""
+archive(native) = "fuzzy.cmxa"
